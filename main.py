@@ -7,7 +7,6 @@ from keep_alive import keep_alive
 keep_alive()
 client = discord.Client()
 global i2
-global muterole
 i2 = 0
 print(db.keys())
 
@@ -32,7 +31,6 @@ async def on_ready():
   print('Logged in')
 @client.event
 async def on_message(message):
-  global muterole
   socialCredit = 0
   sid = message.guild.id
   channel = client.get_channel(message.channel.id)
@@ -48,12 +46,13 @@ async def on_message(message):
   if len(message.content) >= 6:
     if message.content[0:2] == '::':
       if str(sid) + 'muterole' not in db.keys() and message.author.bot == False:
-        print('Warning: Muted role is not set. Please set muted role with ```::muterole role\'s name```')
-        await channel.send('Warning: Muted role is not set. Please set muted role with ```::muterole role\'s name```')
+        print('Warning: Muted role is not set. Please set muted role with ```::muterole role\'s name (Ex: ::muterole Muted)```')
+        await channel.send('Warning: Muted role is not set. Please set muted role with ```::muterole role\'s name (Ex: ::muterole Muted)```')
   #main
   #non mod user can only check sc
   if len(message.content) >= 6 and isAdmin == False:
     if message.content[0:4] == '::sc':
+      print(message.content)
       commandContent = message.content[5:len(message.content)]
       if commandContent.count('<@') > 1:
         print('Invalid syntax')
@@ -78,6 +77,7 @@ async def on_message(message):
   elif len(message.content) >= 6 and isAdmin == True:
     #set muted role
     if message.content[0:10] == '::muterole' and len(message.content) > 11:
+      print(message.content)
       muterole = message.content[11:len(message.content)]
       try:
         member = message.author
@@ -160,7 +160,7 @@ async def on_message(message):
         execMsg = "none"
         exec = False
         time = 0
-        if value < 0:
+        if value < 0 and k == -1:
           time = abs(value)
           execMsg = "muted for " + str(time) + ' minutes'
           exec = True
@@ -173,10 +173,10 @@ async def on_message(message):
         await channel.send(rep)
         print(rep)
         #mute member
-        if exec == True:
-          member = await message.guild.query_members(user_ids=[uid])
-          member = member[0]
-          try:
+        try:
+          if exec == True:
+            member = await message.guild.query_members(user_ids=[uid])
+            member = member[0]
             role = discord.utils.get(message.guild.roles, name=db[str(sid) + 'muterole'])
             await member.add_roles(role)
             print('Muted')
@@ -184,7 +184,13 @@ async def on_message(message):
             #unmute member
             await member.remove_roles(role)
             print('timeup')
-          except:
-            print('Warning: Muted role is not set. Please set muted role with ```::muterole role\'s name```')
-            await channel.send('Warning: Muted role is not set. Please set muted role with ```::muterole role\'s name```')
+          else:
+            member = await message.guild.query_members(user_ids=[uid])
+            member = member[0]
+            role = discord.utils.get(message.guild.roles, name=db[str(sid) + 'muterole'])
+            await member.remove_roles(role)
+            print('Unmuted')
+        except:
+          print('Warning: Muted role is not set. Please set muted role with ```::muterole role\'s name (Ex: ::muterole Muted)```')
+          await channel.send('Warning: Muted role is not set. Please set muted role with ```::muterole role\'s name (Ex: ::muterole Muted)```')
 client.run(os.environ['DISCORD_TOKEN'])
